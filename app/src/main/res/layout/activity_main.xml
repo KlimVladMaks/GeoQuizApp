@@ -1,18 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+<!-- Данный файл является частью представления -->
+
+<!-- Размещаем элементы вертикально в ряд по центру -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:gravity="center"
+    android:orientation="vertical">
 
+    <!-- Текстовое поле для утверждения -->
     <TextView
+        android:id="@+id/question_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:gravity="center"
+        android:padding="24dp"
+        tools:text="@string/question_australia"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Размещаем элементы горизонтально в ряд -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- Кнопка "True" -->
+        <Button
+            android:id="@+id/true_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/true_button"
+            android:layout_margin="4dp"/>
+
+        <!-- Кнопка "False" -->
+        <Button
+            android:id="@+id/false_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/false_button"
+            android:layout_margin="4dp"/>
+
+    </LinearLayout>
+
+    <!-- Размещаем элементы горизонтально в ряд -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- Кнопка "Prev" -->
+        <ImageButton
+            android:id="@+id/prev_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/arrow_left"
+            android:background="@color/purple_500"
+            android:padding="4dp"
+            android:layout_margin="4dp"
+            android:contentDescription="@string/prev_button"/>
+
+        <!-- Кнопка "Next" -->
+        <ImageButton
+            android:id="@+id/next_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/arrow_right"
+            android:background="@color/purple_500"
+            android:padding="4dp"
+            android:layout_margin="4dp"
+            android:contentDescription="@string/next_button"/>
+
+    </LinearLayout>
+
+</LinearLayout>
+
+

@@ -8,6 +8,9 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
+
+/** Страница 119 **/
 
 // Данный файл является частью контроллера
 
@@ -30,25 +33,13 @@ class MainActivity : AppCompatActivity() {
     // Создаём переменную для тестового поля с вопросом
     private lateinit var questionTextView: TextView
 
-    // Создаём список вопросов, состоящий из экземпляров класса Question,
-    // с загруженными в них индитификаторами строк и ответов на вопросы
-    private val questionBank = listOf(
-        Question(R.string.question_australia, true),
-        Question(R.string.question_oceans, true),
-        Question(R.string.question_mideast, false),
-        Question(R.string.question_africa, false),
-        Question(R.string.question_americas, true),
-        Question(R.string.question_asia, true)
-    )
-
-    // Создаём переменную для отслеживания индекса списка
-    private var currentIndex = 0
-
-    // Создаём счётчик для подсчёта количества правильных ответов
-    private var correctAnswersCounter = 0
-
-    // Список индексов вопросов, на которые уже дан ответ
-    private var answeredQuestions = mutableListOf<Int>()
+    // Проводим линивую инициализацию экземпляра класса QuizViewModel
+    // (линивая инициализация означает, что его можно будет инициализировать позже, при первом вызове))
+    // При инициализации достаём класс QuizViewModel из реестра ViewModelProvider,
+    // привязывая его к текущей Activity
+    private val quizViewModel: QuizViewModel by lazy {
+        ViewModelProvider(this)[QuizViewModel::class.java]
+    }
 
     // Переопределяем функцию onCreate, отвечающую за запуск приложения.
     // В Bundle? передаётся информация о предыдущем состоянии приложения (например, после изменение ориентации)
@@ -90,31 +81,24 @@ class MainActivity : AppCompatActivity() {
 
         // Создаём слушателя для кнопки "Next"
         nextButton.setOnClickListener {
-            // Увеличиваем индекс текущего вопроса на один
-            // (с защитой от превышения максимального индекса)
-            currentIndex = (currentIndex + 1) % questionBank.size
+            // Увеличиваем индекс текущего вопроса
+            quizViewModel.moveToNext()
             // Обновлеям вопрос
             updateQuestion()
         }
 
         // Создаём слушателя для кнопки "Prev"
         prevButton.setOnClickListener {
-            // Уменьшаем индекс текущего вопроса на один
-            // (если новое значение меньше нуля, то устанавливаем максимальный индекс)
-            currentIndex = if (currentIndex - 1 >= 0) {
-                currentIndex - 1
-            } else {
-                questionBank.size - 1
-            }
+            // Уменьшаем индекс текущего вопроса
+            quizViewModel.moveToPrev()
             // Обновлеям вопрос
             updateQuestion()
         }
 
         // Создаём слушателя для поля TextView с вопросом
         questionTextView.setOnClickListener {
-            // Увеличиваем индекс текущего вопроса на один
-            // (с защитой от превышения максимального индекса)
-            currentIndex = (currentIndex + 1) % questionBank.size
+            // Увеличиваем индекс текущего вопроса
+            quizViewModel.moveToNext()
             // Обновлеям вопрос
             updateQuestion()
         }
@@ -161,7 +145,7 @@ class MainActivity : AppCompatActivity() {
     // Функция для обновления (или установки) вопроса в поле TextView
     private fun updateQuestion() {
         // Получаем идентификатор текущего вопроса
-        val questionTextResId = questionBank[currentIndex].textResId
+        val questionTextResId = quizViewModel.currentQuestionText
         // Размещаем его в поле TextView
         questionTextView.setText(questionTextResId)
         // Проверяем, был ли уже дан ответ на вопрос
@@ -171,8 +155,8 @@ class MainActivity : AppCompatActivity() {
     // Функция для проверки правильности пользовательского ответа
     private fun checkAnswer(userAnswer: Boolean) {
 
-        // Узнаём правильный ответ на текущий вопрос из questionBank
-        val correctAnswer = questionBank[currentIndex].answer
+        // Узнаём правильный ответ на текущий вопрос
+        val correctAnswer = quizViewModel.currentQuestionAnswer
 
         // Подготавливаем сообщение для всплывающего уведомления
         val messageResId = if (userAnswer == correctAnswer) {
@@ -184,7 +168,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Если ответ правильный, то увеличивает счётчик правильных ответов на один
-        if (messageResId == R.string.correct_toast) correctAnswersCounter++
+        if (messageResId == R.string.correct_toast) quizViewModel.correctAnswersCounter++
 
         // Выводим соответствующую строку в виде всплывающего уведомления
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show()
@@ -193,21 +177,21 @@ class MainActivity : AppCompatActivity() {
         blockAnswerButton()
 
         // Добавляем индекс вопроса в список отвеченных вопросов
-        answeredQuestions.add(currentIndex)
+        quizViewModel.answeredQuestions.add(quizViewModel.currentIndex)
     }
 
     // Функция, проверяющая, должен ли вопрос быть заблокирован
     private fun checkQuestion() {
         // Если ответы на все вопросы получены, то выводим результат и очищаем список отвеченных вопросов
         // После чего завершаем функцию
-        if (answeredQuestions.size == questionBank.size) {
+        if (quizViewModel.answeredQuestions.size == quizViewModel.questionBankSize) {
             showResult()
-            answeredQuestions.clear()
+            quizViewModel.answeredQuestions.clear()
             return
         }
 
         // Если на вопрос уже дан ответ, то блокирем кнопки ответа
-        if (currentIndex in answeredQuestions) blockAnswerButton()
+        if (quizViewModel.currentIndex in quizViewModel.answeredQuestions) blockAnswerButton()
         // Иначе разблокируем кнопки ответа
         else unblockAnswerButton()
     }
@@ -235,11 +219,13 @@ class MainActivity : AppCompatActivity() {
     // Функция для вывода всплыващего сообщения с количеством правильных ответов
     private fun showResult() {
         // Создаём переменную с сообщением
-        val messageResult = "Result: ${correctAnswersCounter}/${questionBank.size} correct answers"
+        val messageResult = "Result: " +
+                "${quizViewModel.correctAnswersCounter}/${quizViewModel.questionBankSize} " +
+                "correct answers"
         // Выводим сообщение с результатами
         Toast.makeText(this, messageResult, Toast.LENGTH_SHORT).show()
         // Обнуляем счётчик правильных ответов
-        correctAnswersCounter = 0
+        quizViewModel.correctAnswersCounter = 0
         // Разблокируем кнопки ответов
         unblockAnswerButton()
     }

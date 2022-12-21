@@ -10,12 +10,21 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 
-/** Страница 119 **/
+/** Страница 123 **/
 
 // Данный файл является частью контроллера
 
 // Создаём TAG для отладки приложения с помощью журнала
 private const val TAG = "MainActivityTAG"
+
+// Создаём ключ для сохранения пары "ключ-значение" при уничтожении Activity
+private const val KEY_INDEX = "index"
+
+// Создаём ключ для хранения счётчика правильно отвеченных вопросов
+private const val KEY_COUNTER = "counter"
+
+// Создаём ключ для хранения индексов отвеченных вопросов
+private const val KEY_ANSWERED_QUESTIONS = "answeredQuestions"
 
 // Обявляем класс MainActivity, с которого начинается работа приложения.
 // Наследуем его от класса AppCompatActivity(), обеспечивающего поддержку старых версий Android
@@ -53,6 +62,22 @@ class MainActivity : AppCompatActivity() {
 
         // Привязываем макет activity_main к текущей активности, используя его индентификатор
         setContentView(R.layout.activity_main)
+
+        // Проверяем, содержится ли в savedInstanceState значение индекса текущего вопроса
+        // Если содержится, то восстанавливаем его
+        // Если не содержится, то устанавливаем его по умолчанию как 0
+        val currentIndex = savedInstanceState?.getInt(KEY_INDEX, 0) ?: 0
+        quizViewModel.currentIndex = currentIndex
+
+        // Востанавливаем из памяти счётчик правильно отвеченных вопросов
+        val correctAnswersCounter = savedInstanceState?.getInt(KEY_COUNTER, 0) ?: 0
+        quizViewModel.correctAnswersCounter = correctAnswersCounter
+
+        // Востанавливаем из памяти список индексов отвеченных вопросов
+        // (если индекса в памяти нет, то устанавливаем пустой список)
+        val answeredQuestions = savedInstanceState?.getIntArray(KEY_ANSWERED_QUESTIONS)
+            ?.toMutableList() ?: emptyArray<Int>().toMutableList()
+        quizViewModel.answeredQuestions = answeredQuestions
 
         // Присваиваем кнопкам "True" и "False" объекты View по индентификатору
         trueButton = findViewById(R.id.true_button)
@@ -126,6 +151,27 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         // Делаем запись в журнал
         Log.d(TAG, "onPause() called")
+    }
+
+    // Переобределяем функцию onSaveInstanceState, которая вызывается при остановке Activity,
+    // чтобы сохранить состояние экземпляра (т.е. сохранить определённые данные)
+    // На вход функции передаём объект Bundle, хранящий данные о предыдущем состоянии
+    override fun onSaveInstanceState(savedInstanceState: Bundle) {
+
+        // Вызываем оригинальную функцию (тажке передаём ей объект Bundle)
+        super.onSaveInstanceState(savedInstanceState)
+
+        // Отправляем отладочное сообщение о вызове данной функции
+        Log.i(TAG, "onSaveInstanceState")
+
+        // Сохраняем значение индекса текущего вопроса
+        savedInstanceState.putInt(KEY_INDEX, quizViewModel.currentIndex)
+
+        // Сохраняем значение счётчика правильно отвеченных вопросов
+        savedInstanceState.putInt(KEY_COUNTER, quizViewModel.correctAnswersCounter)
+
+        // Сохраняем индексы отвеченных вопросов
+        savedInstanceState.putIntArray(KEY_ANSWERED_QUESTIONS, quizViewModel.answeredQuestions.toIntArray())
     }
 
     // Функция для отсановки Activity

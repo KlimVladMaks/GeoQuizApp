@@ -42,12 +42,21 @@
 
     </LinearLayout>
 
+    <!-- Кнопка "Cheat!" -->
+    <Button
+        android:id="@+id/cheat_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_margin="10dp"
+        android:text="@string/cheat_button"/>
+
     <!-- Кнопка "Prev" -->
     <ImageButton
         android:id="@+id/prev_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|left"
+        android:layout_gravity="bottom|start"
         android:src="@drawable/arrow_left"
         android:background="@color/purple_500"
         android:padding="10dp"
@@ -59,7 +68,7 @@
         android:id="@+id/next_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
+        android:layout_gravity="bottom|end"
         android:src="@drawable/arrow_right"
         android:background="@color/purple_500"
         android:padding="10dp"

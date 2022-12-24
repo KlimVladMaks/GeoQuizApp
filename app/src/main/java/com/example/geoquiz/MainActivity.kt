@@ -1,5 +1,6 @@
 package com.example.geoquiz
 
+import android.content.Intent
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -10,7 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 
-/** Страница 123 **/
+/** Страница 160 **/
 
 // Данный файл является частью контроллера
 
@@ -38,6 +39,9 @@ class MainActivity : AppCompatActivity() {
     // Создаём переменные для кнопок "Prev" и "Next"
     private lateinit var nextButton: ImageButton
     private lateinit var prevButton: ImageButton
+
+    // Создаём переменную для кнопки "Cheat"
+    private lateinit var cheatButton: Button
 
     // Создаём переменную для тестового поля с вопросом
     private lateinit var questionTextView: TextView
@@ -87,8 +91,11 @@ class MainActivity : AppCompatActivity() {
         nextButton = findViewById(R.id.next_button)
         prevButton = findViewById(R.id.prev_button)
 
+        // Идентифицируем кнопку "Cheat"
+        cheatButton = findViewById(R.id.cheat_button)
+
         // Индентифицируем текстовое поле для вопросов
-        questionTextView = findViewById(R.id.question_text_view)
+         questionTextView = findViewById(R.id.question_text_view)
 
         // Создаём слушателя, реагирующего на нажатие кнопки "True".
         // Указываем, что для работы ему нужно передать объект View (это необязательно)
@@ -118,6 +125,15 @@ class MainActivity : AppCompatActivity() {
             quizViewModel.moveToPrev()
             // Обновлеям вопрос
             updateQuestion()
+        }
+
+        // Создаём слушателя для кнопки "Cheat!"
+        cheatButton.setOnClickListener {
+            // Подготавливаем интент перехода на CheatActivity, загружая в него информацию об
+            // ответе на текущий вопрос, и запускаем CheatActivity
+            val answerIsTrue = quizViewModel.currentQuestionAnswer
+            val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
+            startActivity(intent)
         }
 
         // Создаём слушателя для поля TextView с вопросом

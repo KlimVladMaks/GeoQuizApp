@@ -1,5 +1,6 @@
 package com.example.geoquiz
 
+import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
@@ -9,9 +10,12 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 
-/** Страница 160 **/
+/** Страница 165 **/
+/** Доработать механизм отслеживания читерства **/
 
 // Данный файл является частью контроллера
 
@@ -26,6 +30,9 @@ private const val KEY_COUNTER = "counter"
 
 // Создаём ключ для хранения индексов отвеченных вопросов
 private const val KEY_ANSWERED_QUESTIONS = "answeredQuestions"
+
+// Создаём ключ для проверки результата, подсмотрел ли пользователь ответ
+private const val EXTRA_ANSWER_SHOWN = "com.example.geoquiz.answer_is_shown"
 
 // Обявляем класс MainActivity, с которого начинается работа приложения.
 // Наследуем его от класса AppCompatActivity(), обеспечивающего поддержку старых версий Android
@@ -52,6 +59,22 @@ class MainActivity : AppCompatActivity() {
     // привязывая его к текущей Activity
     private val quizViewModel: QuizViewModel by lazy {
         ViewModelProvider(this)[QuizViewModel::class.java]
+    }
+
+    // Помещаем в переменную startForResult компонент обработки ответа от CheatActivity
+    // (иными словами, регистрируем запрос к CheatActivity)
+    // Если ответ успешен, то обновялем перемнную quizViewModel.isCheater на переданное значение
+    // (если ответа нет, то устанавливаем false)
+    private val startForResult = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        // (К коду ниже переходим лишь если в CheatActivity был специально установлен RESULT_OK)
+        if (it.resultCode == Activity.RESULT_OK) {
+            val intent = it.data
+            quizViewModel.isCheater = intent?.getBooleanExtra(
+                EXTRA_ANSWER_SHOWN, false
+            ) ?: false
+        }
     }
 
     // Переопределяем функцию onCreate, отвечающую за запуск приложения.
@@ -133,7 +156,8 @@ class MainActivity : AppCompatActivity() {
             // ответе на текущий вопрос, и запускаем CheatActivity
             val answerIsTrue = quizViewModel.currentQuestionAnswer
             val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
-            startActivity(intent)
+            // (При возврате из CheatActivity автоматичеки обновится quizViewModel.isCheater)
+            startForResult.launch(intent)
         }
 
         // Создаём слушателя для поля TextView с вопросом
@@ -221,12 +245,13 @@ class MainActivity : AppCompatActivity() {
         val correctAnswer = quizViewModel.currentQuestionAnswer
 
         // Подготавливаем сообщение для всплывающего уведомления
-        val messageResId = if (userAnswer == correctAnswer) {
-            // Если ответ пользователя совпадает с заданным, то возвращаем строку "Correct!"
-            R.string.correct_toast
-        } else {
-            // Иначе возвращаем строку "Incorrect!"
-            R.string.incorrect_toast
+        val messageResId = when {
+            // Если пользователь подсматрел ответ
+            quizViewModel.isCheater -> R.string.judgment_toast
+            // Если ответ верный
+            userAnswer == correctAnswer -> R.string.correct_toast
+            // Если ответ неверный
+            else -> R.string.incorrect_toast
         }
 
         // Если ответ правильный, то увеличивает счётчик правильных ответов на один

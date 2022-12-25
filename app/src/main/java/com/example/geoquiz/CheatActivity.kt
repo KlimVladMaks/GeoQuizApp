@@ -1,5 +1,6 @@
 package com.example.geoquiz
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -9,6 +10,9 @@ import android.widget.TextView
 
 // Создаём ключ для получения ответа на вопрос через Intent Extra
 private const val EXTRA_ANSWER_IS_TRUE = "com.example.geoquiz.answer_is_true"
+
+// Создаём ключ для возвращения результат, подсмотрел ли пользователь ответ
+private const val EXTRA_ANSWER_SHOWN = "com.example.geoquiz.answer_is_shown"
 
 // Создаём CheatActivity, наследуя её от AppCompatActivity
 class CheatActivity: AppCompatActivity() {
@@ -45,9 +49,21 @@ class CheatActivity: AppCompatActivity() {
                 else -> R.string.false_button
             }
 
-            // Запичываем ответ на вопрос в соответствующее текстовое поле
+            // Записываем ответ на вопрос в соответствующее текстовое поле
             answerTextView.setText(answerText)
+            // Записываем в ответ Activity, что пользователь посмотрел ответ
+            setAnswerShownResult(true)
         }
+    }
+
+    // Функция, помещающая в ответ Activity результат, посмотрел ли пользователь ответ
+    private fun setAnswerShownResult(isAnswerShown: Boolean) {
+        // Создаём интент с результатом, посмотрел ли пользователь ответ
+        val data = Intent().apply {
+            putExtra(EXTRA_ANSWER_SHOWN, isAnswerShown)
+        }
+        // Помещаем в ответ RESULT_OK (число) и созданный интент
+        setResult(Activity.RESULT_OK, data)
     }
 
     // Создаём companion-объект, к содержимому которого можно обращаться без создания экземляра класса

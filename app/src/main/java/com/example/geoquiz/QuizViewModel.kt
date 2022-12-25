@@ -45,6 +45,9 @@ class QuizViewModel: ViewModel() {
     val questionBankSize: Int
         get() = questionBank.size
 
+    // Переменная, показывающая подсматривал ли пользователь ответ
+    var isCheater = false
+
     // Функция для увеличения индекса текущего вопроса (с защитой от выхода за границы диапозона)
     fun moveToNext() {
         currentIndex = (currentIndex + 1) % questionBank.size

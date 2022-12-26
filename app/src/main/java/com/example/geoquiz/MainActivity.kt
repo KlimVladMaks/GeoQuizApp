@@ -15,7 +15,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 
 /** Страница 168 **/
-/** Доработать механизм отслеживания читерства **/
 
 // Данный файл является частью контроллера
 

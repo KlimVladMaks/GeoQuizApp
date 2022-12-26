@@ -1,6 +1,5 @@
 package com.example.geoquiz
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 
 // Создаём тэг с именем класса для отладки
@@ -18,6 +17,9 @@ class QuizViewModel: ViewModel() {
 
     // Список индексов вопросов, на которые уже дан ответ
     var answeredQuestions = mutableListOf<Int>()
+
+    // Список индексов вопросов, на которые пользователь подглядел ответ
+    var cheatingQuestions = mutableListOf<Int>()
 
     // Создаём список вопросов, состоящий из экземпляров класса Question,
     // с загруженными в них индитификаторами строк и ответов на вопросы
@@ -45,9 +47,6 @@ class QuizViewModel: ViewModel() {
     val questionBankSize: Int
         get() = questionBank.size
 
-    // Переменная, показывающая подсматривал ли пользователь ответ
-    var isCheater = false
-
     // Функция для увеличения индекса текущего вопроса (с защитой от выхода за границы диапозона)
     fun moveToNext() {
         currentIndex = (currentIndex + 1) % questionBank.size
@@ -64,3 +63,5 @@ class QuizViewModel: ViewModel() {
         }
     }
 }
+
+

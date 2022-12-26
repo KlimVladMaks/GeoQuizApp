@@ -14,7 +14,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 
-/** Страница 165 **/
+/** Страница 168 **/
 /** Доработать механизм отслеживания читерства **/
 
 // Данный файл является частью контроллера
@@ -31,8 +31,14 @@ private const val KEY_COUNTER = "counter"
 // Создаём ключ для хранения индексов отвеченных вопросов
 private const val KEY_ANSWERED_QUESTIONS = "answeredQuestions"
 
+// Создаём ключ для хранения индексов вопросов, на которые бы подсмотрен ответ
+private const val KEY_CHEATING_QUESTIONS = "cheatingQuestions"
+
 // Создаём ключ для проверки результата, подсмотрел ли пользователь ответ
 private const val EXTRA_ANSWER_SHOWN = "com.example.geoquiz.answer_is_shown"
+
+// Создаём ключ для получения доступа к индексу вопроса, на который был подсмотрен ответ
+private const val EXTRA_CURRENT_INDEX = "com.example.geoquiz.current_index"
 
 // Обявляем класс MainActivity, с которого начинается работа приложения.
 // Наследуем его от класса AppCompatActivity(), обеспечивающего поддержку старых версий Android
@@ -70,10 +76,11 @@ class MainActivity : AppCompatActivity() {
     ) {
         // (К коду ниже переходим лишь если в CheatActivity был специально установлен RESULT_OK)
         if (it.resultCode == Activity.RESULT_OK) {
+            // Вытаскиваем из Extra индекс вопроса, на который был подсмотрен ответ, и помещаем
+            // данный индекс в список cheatingQuestions
             val intent = it.data
-            quizViewModel.isCheater = intent?.getBooleanExtra(
-                EXTRA_ANSWER_SHOWN, false
-            ) ?: false
+            val cheatQuestionIndex = intent?.getIntExtra(EXTRA_CURRENT_INDEX, -1) ?: -1
+            quizViewModel.cheatingQuestions.add(cheatQuestionIndex)
         }
     }
 
@@ -105,6 +112,11 @@ class MainActivity : AppCompatActivity() {
         val answeredQuestions = savedInstanceState?.getIntArray(KEY_ANSWERED_QUESTIONS)
             ?.toMutableList() ?: emptyArray<Int>().toMutableList()
         quizViewModel.answeredQuestions = answeredQuestions
+
+        // Загружаем из памяти список индексов вопросов, на которые был подсмотрен ответ
+        val cheatingQuestions = savedInstanceState?.getIntArray(KEY_CHEATING_QUESTIONS)
+            ?.toMutableList() ?: emptyArray<Int>().toMutableList()
+        quizViewModel.cheatingQuestions = cheatingQuestions
 
         // Присваиваем кнопкам "True" и "False" объекты View по индентификатору
         trueButton = findViewById(R.id.true_button)
@@ -153,9 +165,11 @@ class MainActivity : AppCompatActivity() {
         // Создаём слушателя для кнопки "Cheat!"
         cheatButton.setOnClickListener {
             // Подготавливаем интент перехода на CheatActivity, загружая в него информацию об
-            // ответе на текущий вопрос, и запускаем CheatActivity
+            // ответе на текущий вопрос и индексе текущего вопроса, после чего запускаем CheatActivity
             val answerIsTrue = quizViewModel.currentQuestionAnswer
-            val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
+            val intent = CheatActivity.newIntent(this@MainActivity,
+                answerIsTrue,
+                quizViewModel.currentIndex)
             // (При возврате из CheatActivity автоматичеки обновится quizViewModel.isCheater)
             startForResult.launch(intent)
         }
@@ -212,6 +226,9 @@ class MainActivity : AppCompatActivity() {
 
         // Сохраняем индексы отвеченных вопросов
         savedInstanceState.putIntArray(KEY_ANSWERED_QUESTIONS, quizViewModel.answeredQuestions.toIntArray())
+
+        // Сохраняем индексы вопросов, на которые был подсмотрен ответ
+        savedInstanceState.putIntArray(KEY_CHEATING_QUESTIONS, quizViewModel.cheatingQuestions.toIntArray())
     }
 
     // Функция для отсановки Activity
@@ -246,8 +263,8 @@ class MainActivity : AppCompatActivity() {
 
         // Подготавливаем сообщение для всплывающего уведомления
         val messageResId = when {
-            // Если пользователь подсматрел ответ
-            quizViewModel.isCheater -> R.string.judgment_toast
+            // Если ответ на данный вопрос подсмотрен
+            quizViewModel.currentIndex in quizViewModel.cheatingQuestions -> R.string.judgment_toast
             // Если ответ верный
             userAnswer == correctAnswer -> R.string.correct_toast
             // Если ответ неверный
@@ -313,6 +330,8 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, messageResult, Toast.LENGTH_SHORT).show()
         // Обнуляем счётчик правильных ответов
         quizViewModel.correctAnswersCounter = 0
+        // Очищаем список ответов, на которые был подсмотрен ответ
+        quizViewModel.cheatingQuestions.clear()
         // Разблокируем кнопки ответов
         unblockAnswerButton()
     }

@@ -1,8 +1,9 @@
 package com.example.geoquiz
 
+import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -10,11 +11,11 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityOptionsCompat
 import androidx.lifecycle.ViewModelProvider
 
-/** Страница 168 **/
+/** Страница 182 **/
 
 // Данный файл является частью контроллера
 
@@ -32,9 +33,6 @@ private const val KEY_ANSWERED_QUESTIONS = "answeredQuestions"
 
 // Создаём ключ для хранения индексов вопросов, на которые бы подсмотрен ответ
 private const val KEY_CHEATING_QUESTIONS = "cheatingQuestions"
-
-// Создаём ключ для проверки результата, подсмотрел ли пользователь ответ
-private const val EXTRA_ANSWER_SHOWN = "com.example.geoquiz.answer_is_shown"
 
 // Создаём ключ для получения доступа к индексу вопроса, на который был подсмотрен ответ
 private const val EXTRA_CURRENT_INDEX = "com.example.geoquiz.current_index"
@@ -57,6 +55,9 @@ class MainActivity : AppCompatActivity() {
 
     // Создаём переменную для тестового поля с вопросом
     private lateinit var questionTextView: TextView
+
+    // Создаём переменную для текстового поля с версией API
+    private lateinit var apiTextView: TextView
 
     // Проводим линивую инициализацию экземпляра класса QuizViewModel
     // (линивая инициализация означает, что его можно будет инициализировать позже, при первом вызове))
@@ -86,6 +87,8 @@ class MainActivity : AppCompatActivity() {
     // Переопределяем функцию onCreate, отвечающую за запуск приложения.
     // В Bundle? передаётся информация о предыдущем состоянии приложения (например, после изменение ориентации)
     // или None, если информации о предыдущем состоянии нет.
+    // (Создаём анатацию, показывающую, что в функции могут использоваться более новые версии API)
+    @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         // Создаём экземпляр подкласса activity, вызывая оригинальную (непереопределённую) функцию onCreate
         super.onCreate(savedInstanceState)
@@ -129,7 +132,12 @@ class MainActivity : AppCompatActivity() {
         cheatButton = findViewById(R.id.cheat_button)
 
         // Индентифицируем текстовое поле для вопросов
-         questionTextView = findViewById(R.id.question_text_view)
+        questionTextView = findViewById(R.id.question_text_view)
+
+        // Инициализируем текстовое поле для версии API и помещаем в него текущую версию API
+        apiTextView = findViewById(R.id.api_text_view)
+        val apiLevel = getString(R.string.api_level, Build.VERSION.SDK_INT)
+        apiTextView.text = apiLevel
 
         // Создаём слушателя, реагирующего на нажатие кнопки "True".
         // Указываем, что для работы ему нужно передать объект View (это необязательно)
@@ -164,13 +172,30 @@ class MainActivity : AppCompatActivity() {
         // Создаём слушателя для кнопки "Cheat!"
         cheatButton.setOnClickListener {
             // Подготавливаем интент перехода на CheatActivity, загружая в него информацию об
-            // ответе на текущий вопрос и индексе текущего вопроса, после чего запускаем CheatActivity
+            // ответе на текущий вопрос и индексе текущего вопроса
             val answerIsTrue = quizViewModel.currentQuestionAnswer
             val intent = CheatActivity.newIntent(this@MainActivity,
                 answerIsTrue,
                 quizViewModel.currentIndex)
-            // (При возврате из CheatActivity автоматичеки обновится quizViewModel.isCheater)
-            startForResult.launch(intent)
+
+            // Если версия устройства больше или равна "Marshmello", то добавляем дополнительную анимацию
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+                // Создаём круговоую анимацию Activity, делая так, чтобы она отображалась
+                // для кнопки "Cheat" и загружаем анимацию в переменную option
+                // (Используется более высокое API, чем указанное в манифесте)
+                val option = ActivityOptionsCompat
+                    .makeClipRevealAnimation(it, 0, 0, it.width, it.height)
+
+                // Запускаем CheatActivity, передавая ей интент и анимацию для кнопки
+                // (При возврате из CheatActivity автоматичеки обновится quizViewModel.isCheater)
+                startForResult.launch(intent, option)
+
+            } else {
+                // Запускаем CheatActivity, передавая ей интент
+                // (При возврате из CheatActivity автоматичеки обновится quizViewModel.isCheater)
+                startForResult.launch(intent)
+            }
         }
 
         // Создаём слушателя для поля TextView с вопросом

@@ -3,6 +3,7 @@ package com.example.geoquiz
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
@@ -42,6 +43,9 @@ class CheatActivity: AppCompatActivity() {
         ViewModelProvider(this)[CheatViewModel::class.java]
     }
 
+    // Создаём переменную для текстового поля с версией API
+    private lateinit var apiTextView: TextView
+
     // Переопределяем функцию onCreate, отвечающую за создание Activity
     override fun onCreate(savedInstanceState: Bundle?) {
         // Вызываем базовый функционал onCreate()
@@ -58,6 +62,11 @@ class CheatActivity: AppCompatActivity() {
         // Инициализируем элементы интрфейса
         answerTextView = findViewById(R.id.answer_text_view)
         showAnswerButton = findViewById(R.id.show_answer_button)
+
+        // Инициализируем текстовое поле для версии API и помещаем в него текущую версию API
+        apiTextView = findViewById(R.id.api_text_view)
+        val apiLevel = getString(R.string.api_level, Build.VERSION.SDK_INT)
+        apiTextView.text = apiLevel
 
         // Достаём из памяти показатель, был ли подсмотрен ответ на вопрос
         cheatViewModel.answerIsShown = savedInstanceState

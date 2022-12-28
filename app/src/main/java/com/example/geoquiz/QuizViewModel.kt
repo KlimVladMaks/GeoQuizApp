@@ -21,6 +21,12 @@ class QuizViewModel: ViewModel() {
     // Список индексов вопросов, на которые пользователь подглядел ответ
     var cheatingQuestions = mutableListOf<Int>()
 
+    // Счётчик количества использованных подсказок
+    var numberOfPrompts = 0
+
+    // Максимальное количество подсказок
+    val maxNumberOfPrompts = 3
+
     // Создаём список вопросов, состоящий из экземпляров класса Question,
     // с загруженными в них индитификаторами строк и ответов на вопросы
     private val questionBank = listOf(

@@ -18,6 +18,7 @@
     <string name="cheat_button">Cheat!</string>
     <string name="judgment_toast">Cheating is wrong.</string>
     <string name="api_level">API Level %1$d</string>
+    <string name="cheat_prompts_button">Cheat! (%1$d/%2$d)</string>
 </resources>
 
 

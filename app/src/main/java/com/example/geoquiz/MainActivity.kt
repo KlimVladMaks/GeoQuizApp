@@ -3,6 +3,7 @@ package com.example.geoquiz
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.Color
+import android.nfc.Tag
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -33,6 +34,9 @@ private const val KEY_ANSWERED_QUESTIONS = "answeredQuestions"
 
 // Создаём ключ для хранения индексов вопросов, на которые бы подсмотрен ответ
 private const val KEY_CHEATING_QUESTIONS = "cheatingQuestions"
+
+// Создаём ключ для хранения количества использованных подсказок
+private const val KEY_NUMBER_PROMPTS = "numberOfPrompts"
 
 // Создаём ключ для получения доступа к индексу вопроса, на который был подсмотрен ответ
 private const val EXTRA_CURRENT_INDEX = "com.example.geoquiz.current_index"
@@ -81,6 +85,12 @@ class MainActivity : AppCompatActivity() {
             val intent = it.data
             val cheatQuestionIndex = intent?.getIntExtra(EXTRA_CURRENT_INDEX, -1) ?: -1
             quizViewModel.cheatingQuestions.add(cheatQuestionIndex)
+
+            // Увеличиваем на один число использованных подсказок
+            quizViewModel.numberOfPrompts++
+
+            // Обновляем состояние кнопки "Cheat"
+            updateCheatButton()
         }
     }
 
@@ -119,6 +129,10 @@ class MainActivity : AppCompatActivity() {
         val cheatingQuestions = savedInstanceState?.getIntArray(KEY_CHEATING_QUESTIONS)
             ?.toMutableList() ?: emptyArray<Int>().toMutableList()
         quizViewModel.cheatingQuestions = cheatingQuestions
+
+        // Загружаем из памяти количество использованных подсказок
+        val numberOfPrompts = savedInstanceState?.getInt(KEY_NUMBER_PROMPTS, 0) ?: 0
+        quizViewModel.numberOfPrompts = numberOfPrompts
 
         // Присваиваем кнопкам "True" и "False" объекты View по индентификатору
         trueButton = findViewById(R.id.true_button)
@@ -208,6 +222,9 @@ class MainActivity : AppCompatActivity() {
 
         // Обновляем вопрос
         updateQuestion()
+
+        // Обновляем состояние кнопки "Cheat"
+        updateCheatButton()
     }
 
     // Функция для запуска Activity
@@ -253,6 +270,9 @@ class MainActivity : AppCompatActivity() {
 
         // Сохраняем индексы вопросов, на которые был подсмотрен ответ
         savedInstanceState.putIntArray(KEY_CHEATING_QUESTIONS, quizViewModel.cheatingQuestions.toIntArray())
+
+        // Сохраняем количество использованных подсказок
+        savedInstanceState.putInt(KEY_NUMBER_PROMPTS, quizViewModel.numberOfPrompts)
     }
 
     // Функция для отсановки Activity
@@ -310,11 +330,12 @@ class MainActivity : AppCompatActivity() {
 
     // Функция, проверяющая, должен ли вопрос быть заблокирован
     private fun checkQuestion() {
-        // Если ответы на все вопросы получены, то выводим результат и очищаем список отвеченных вопросов
-        // После чего завершаем функцию
+        // Если ответы на все вопросы получены, то выводим результат, очищаем список отвеченных вопросов
+        // и обнуляем количество использованных подсказок, после чего завершаем функцию
         if (quizViewModel.answeredQuestions.size == quizViewModel.questionBankSize) {
             showResult()
             quizViewModel.answeredQuestions.clear()
+            unblockCheatButton()
             return
         }
 
@@ -342,6 +363,37 @@ class MainActivity : AppCompatActivity() {
         // Возвращаем прежний цвет
         trueButton.setBackgroundColor(Color.parseColor("#FF6200EE"))
         falseButton.setBackgroundColor(Color.parseColor("#FF6200EE"))
+    }
+
+    // Обновляем состояние кнопки "Cheat"
+    private fun updateCheatButton() {
+        // Записываем в кнопке "Cheat" количество оставшихся подсказок
+        cheatButton.text = getString(R.string.cheat_prompts_button,
+            quizViewModel.numberOfPrompts,
+            quizViewModel.maxNumberOfPrompts)
+
+        // Если превышено максимальное количество подсказок, то блокируем кнопку "Cheat"
+        if (quizViewModel.numberOfPrompts >= quizViewModel.maxNumberOfPrompts) blockCheatButton()
+    }
+
+    // Функция для блокировки кнопки "Cheat"
+    private fun blockCheatButton() {
+        // Блокируем кнопку и меняем её цвет
+        cheatButton.isClickable = false
+        cheatButton.setBackgroundColor(Color.GRAY)
+    }
+
+    // Функция для разблокировки кнопки "Cheat"
+    private fun unblockCheatButton() {
+        // Разблокируем кнопку и возвращаем ей прежний цвет
+        cheatButton.isClickable = true
+        cheatButton.setBackgroundColor(Color.parseColor("#FF6200EE"))
+
+        // Обнуляем количество использованных подсказок
+        quizViewModel.numberOfPrompts = 0
+
+        // Обновляем состояние кнопки "Cheat"
+        updateCheatButton()
     }
 
     // Функция для вывода всплыващего сообщения с количеством правильных ответов
